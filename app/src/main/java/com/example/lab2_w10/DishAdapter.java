@@ -1,7 +1,9 @@
 package com.example.lab2_w10;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,47 +12,62 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
-// Adapter cho RecyclerView để hiển thị danh sách món ăn
 public class DishAdapter extends RecyclerView.Adapter<DishAdapter.DishViewHolder> {
     private List<Dish> dishList;
     private Context context;
+    private BroadcastReceiver orderResponseReceiver;
 
-    // Constructor: Khởi tạo adapter với context và danh sách món ăn
     public DishAdapter(Context context, List<Dish> dishList) {
         this.context = context;
         this.dishList = dishList;
+        setupOrderResponseReceiver();
     }
 
-    // Tạo ViewHolder mới cho mỗi mục trong danh sách
+    private void setupOrderResponseReceiver() {
+        orderResponseReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (OrderService.ACTION_ORDER_RESPONSE.equals(intent.getAction())) {
+                    int orderId = intent.getIntExtra(OrderService.EXTRA_ORDER_ID, -1);
+                    String dishName = intent.getStringExtra(OrderService.EXTRA_DISH_NAME);
+
+                    if (orderId != -1) {
+                        Toast.makeText(context,
+                                "Đã đặt món " + dishName + " thành công. Mã đơn: " + orderId,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        };
+
+        LocalBroadcastManager.getInstance(context).registerReceiver(
+                orderResponseReceiver,
+                new IntentFilter(OrderService.ACTION_ORDER_RESPONSE)
+        );
+    }
+
     @NonNull
     @Override
     public DishViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Nạp layout item_dish.xml cho mỗi món ăn
         View view = LayoutInflater.from(context).inflate(R.layout.item_dish, parent, false);
         return new DishViewHolder(view);
     }
 
-    // Gán dữ liệu món ăn vào ViewHolder tại vị trí position
     @Override
     public void onBindViewHolder(@NonNull DishViewHolder holder, int position) {
-        // Lấy món ăn từ danh sách
         Dish dish = dishList.get(position);
-        // Đặt hình ảnh món ăn
         holder.imgDish.setImageResource(dish.getImageRes());
-        // Đặt tên món ăn
         holder.tvDishName.setText(dish.getName());
-        // Đặt giá món ăn với định dạng số
         holder.tvPrice.setText(String.format("%,d đ", dish.getPrice()));
 
-        // Xử lý sự kiện nhấn nút đặt món
         holder.btnOrder.setOnClickListener(v -> {
-            // Hiển thị thông báo xác nhận đặt món
-            Toast.makeText(context, "Đã đặt món: " + dish.getName(), Toast.LENGTH_SHORT).show();
+            // Hiển thị thông báo đang xử lý
+            Toast.makeText(context, "Đang xử lý đặt món: " + dish.getName(), Toast.LENGTH_SHORT).show();
 
-            // Gửi Intent tới OrderService để gửi đơn hàng tới server
             Intent serviceIntent = new Intent(context, OrderService.class);
             serviceIntent.putExtra("dish_name", dish.getName());
             serviceIntent.putExtra("price", dish.getPrice());
@@ -58,13 +75,18 @@ public class DishAdapter extends RecyclerView.Adapter<DishAdapter.DishViewHolder
         });
     }
 
-    // Trả về số lượng món ăn trong danh sách
     @Override
     public int getItemCount() {
         return dishList != null ? dishList.size() : 0;
     }
 
-    // ViewHolder lưu trữ các thành phần giao diện của một món ăn
+    // Thêm phương thức để hủy đăng ký BroadcastReceiver
+    public void unregisterReceiver() {
+        if (orderResponseReceiver != null) {
+            LocalBroadcastManager.getInstance(context).unregisterReceiver(orderResponseReceiver);
+        }
+    }
+
     public static class DishViewHolder extends RecyclerView.ViewHolder {
         ImageView imgDish;
         TextView tvDishName, tvPrice;

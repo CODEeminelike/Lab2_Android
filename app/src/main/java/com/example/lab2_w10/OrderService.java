@@ -14,15 +14,23 @@ import org.json.JSONObject;
 
 public class OrderService extends IntentService {
     private static final String TAG = "OrderService";
-    // URL server: dùng 10.0.2.2 cho emulator, hoặc IP máy tính cho thiết bị thật
-    private static final String SERVER_URL = "http://10.0.2.2:3000/api/order"; // Cập nhật nếu dùng thiết bị thật
+    private static final String SERVER_URL = "http://10.0.2.2:3000/api/order";
 
     // Hằng số cho broadcast
     public static final String ACTION_ORDER_RESPONSE = "com.example.lab2_w10.ORDER_RESPONSE";
     public static final String EXTRA_ORDER_ID = "order_id";
+    public static final String EXTRA_DISH_NAME = "dish_name";
+
+    private RequestQueue queue; // Khai báo RequestQueue ở cấp class
 
     public OrderService() {
         super("OrderService");
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        queue = Volley.newRequestQueue(this); // Khởi tạo queue trong onCreate
     }
 
     @Override
@@ -40,13 +48,13 @@ public class OrderService extends IntentService {
                 return;
             }
 
-            sendOrderToServer(orderData);
+            sendOrderToServer(orderData, dishName); // Truyền thêm dishName
         }
     }
 
-    private void sendOrderToServer(JSONObject orderData) {
+    private void sendOrderToServer(JSONObject orderData, String dishName) {
         Log.d(TAG, "Dữ liệu gửi đi: " + orderData.toString());
-        RequestQueue queue = Volley.newRequestQueue(this);
+
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.POST,
                 SERVER_URL,
@@ -55,9 +63,10 @@ public class OrderService extends IntentService {
                     Log.d(TAG, "Phản hồi từ server: " + response.toString());
                     try {
                         int orderId = response.getInt("order_id");
-                        // Gửi broadcast với order_id
+                        // Gửi broadcast với cả order_id và dish_name
                         Intent broadcastIntent = new Intent(ACTION_ORDER_RESPONSE);
                         broadcastIntent.putExtra(EXTRA_ORDER_ID, orderId);
+                        broadcastIntent.putExtra(EXTRA_DISH_NAME, dishName);
                         LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent);
                     } catch (JSONException e) {
                         Log.e(TAG, "Lỗi parse response: " + e.getMessage());
@@ -68,5 +77,13 @@ public class OrderService extends IntentService {
                 }
         );
         queue.add(jsonObjectRequest);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (queue != null) {
+            queue.cancelAll(TAG); // Hủy các request khi service bị hủy
+        }
     }
 }
