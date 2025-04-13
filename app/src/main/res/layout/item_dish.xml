@@ -14,7 +14,7 @@ android:id="@+id/imgDish"
 android:layout_width="120dp"
 android:layout_height="120dp"
 android:scaleType="centerCrop"
-android:src="@drawable/pho" /> <!-- Thay bằng ảnh của bạn -->
+android:src="@drawable/pho" /> <!-- Thay ảnh vô -->
 
     <!-- Tên món -->
 <TextView

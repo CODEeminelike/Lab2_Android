@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">lab2_W10</string>
+    <string name="open_drawer">Mở menu</string>
+    <string name="close_drawer">Đóng menu</string>
+
+    <string name="about_shortcut_short">Về chúng tôi</string>
+    <string name="about_shortcut_long">Thông tin về ứng dụng</string>
 </resources>
