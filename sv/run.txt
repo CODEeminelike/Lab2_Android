@@ -1,0 +1,12 @@
+Microsoft Windows [Version 10.0.19045.5608]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32>d:
+
+D:\>cd D:\Hard\LTDT\Pj\lab2_W10\sv
+
+npm install express body-parser cors uuid
+
+npm install ws
+
+node server.js

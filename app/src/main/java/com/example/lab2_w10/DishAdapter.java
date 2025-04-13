@@ -1,6 +1,7 @@
 package com.example.lab2_w10;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,7 +15,6 @@ import java.util.List;
 
 // Adapter cho RecyclerView để hiển thị danh sách món ăn
 public class DishAdapter extends RecyclerView.Adapter<DishAdapter.DishViewHolder> {
-    // Danh sách món ăn và context của ứng dụng
     private List<Dish> dishList;
     private Context context;
 
@@ -29,8 +29,7 @@ public class DishAdapter extends RecyclerView.Adapter<DishAdapter.DishViewHolder
     @Override
     public DishViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         // Nạp layout item_dish.xml cho mỗi món ăn
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_dish, parent, false);
+        View view = LayoutInflater.from(context).inflate(R.layout.item_dish, parent, false);
         return new DishViewHolder(view);
     }
 
@@ -50,23 +49,27 @@ public class DishAdapter extends RecyclerView.Adapter<DishAdapter.DishViewHolder
         holder.btnOrder.setOnClickListener(v -> {
             // Hiển thị thông báo xác nhận đặt món
             Toast.makeText(context, "Đã đặt món: " + dish.getName(), Toast.LENGTH_SHORT).show();
-            // Gửi order đến server (chưa triển khai)
+
+            // Gửi Intent tới OrderService để gửi đơn hàng tới server
+            Intent serviceIntent = new Intent(context, OrderService.class);
+            serviceIntent.putExtra("dish_name", dish.getName());
+            serviceIntent.putExtra("price", dish.getPrice());
+            context.startService(serviceIntent);
         });
     }
 
     // Trả về số lượng món ăn trong danh sách
     @Override
     public int getItemCount() {
-        return dishList.size();
+        return dishList != null ? dishList.size() : 0;
     }
 
     // ViewHolder lưu trữ các thành phần giao diện của một món ăn
     public static class DishViewHolder extends RecyclerView.ViewHolder {
-        ImageView imgDish; // Hình ảnh món ăn
-        TextView tvDishName, tvPrice; // Tên và giá món ăn
-        Button btnOrder; // Nút đặt món
+        ImageView imgDish;
+        TextView tvDishName, tvPrice;
+        Button btnOrder;
 
-        // Khởi tạo ViewHolder, ánh xạ các thành phần giao diện từ itemView
         public DishViewHolder(@NonNull View itemView) {
             super(itemView);
             imgDish = itemView.findViewById(R.id.imgDish);

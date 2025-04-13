@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const PORT = 3000;
@@ -9,99 +10,85 @@ const PORT = 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// Dữ liệu mẫu
-let orders = [];
-let orderIdCounter = 1;
+// Database mẫu (trong thực tế nên dùng database thật)
+let orders = {};
+let orderStatus = {};
 
-// API Endpoints
-
-// Nhận đơn hàng từ app Android
-app.post('/api/orders', (req, res) => {
-    const { items, tableNumber } = req.body;
+// API endpoints
+app.post('/api/order', (req, res) => {
+    const { tableId, items } = req.body;
     
-    if (!items || !tableNumber) {
+    if (!tableId || !items || items.length === 0) {
         return res.status(400).json({ error: 'Thiếu thông tin đơn hàng' });
     }
+
+    // Tạo ID đơn hàng ngẫu nhiên từ 1-1000
+    const orderId = Math.floor(Math.random() * 1000) + 1;
     
-    const newOrder = {
-        id: orderIdCounter++,
+    // Lưu đơn hàng
+    orders[orderId] = {
+        tableId,
         items,
-        tableNumber,
-        status: 'Đang xử lý',
         createdAt: new Date()
     };
     
-    orders.push(newOrder);
-    
-    // Giới hạn orderIdCounter từ 1 đến 1000
-    if (orderIdCounter > 1000) {
-        orderIdCounter = 1;
-    }
-    
-    // Gửi thông báo đến app Android
-    // Trong thực tế, bạn có thể sử dụng Firebase Cloud Messaging hoặc WebSocket
-    // Ở đây chỉ trả về ID đơn hàng
-    
-    res.json({ 
-        orderId: newOrder.id,
-        message: `Đơn hàng ${newOrder.id} của bạn đang xử lý.`
-    });
-});
-
-// Cập nhật trạng thái đơn hàng từ web app
-app.put('/api/orders/:id/status', (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body;
-    
-    const orderIndex = orders.findIndex(order => order.id === parseInt(id));
-    
-    if (orderIndex === -1) {
-        return res.status(404).json({ error: 'Đơn hàng không tồn tại' });
-    }
-    
-    orders[orderIndex].status = status;
-    
-    // Nếu trạng thái là "xong", xóa đơn hàng khỏi danh sách
-    if (status === 'xong') {
-        orders.splice(orderIndex, 1);
-    }
-    
-    // Gửi thông báo đến app Android
-    // Trong thực tế, bạn cần triển khai push notification ở đây
+    // Đặt trạng thái ban đầu
+    orderStatus[orderId] = 'Đang xử lý';
     
     res.json({ 
         success: true,
-        message: `Đơn hàng ${id} đã được cập nhật trạng thái thành ${status}`
+        orderId,
+        message: `Đơn hàng ${orderId} của bạn đang xử lý.`
     });
 });
 
-// Lấy danh sách đơn hàng cho web app
-app.get('/api/orders', (req, res) => {
-    res.json(orders);
+app.get('/api/order/status/:orderId', (req, res) => {
+    const { orderId } = req.params;
+    
+    if (!orders[orderId]) {
+        return res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
+    }
+    
+    res.json({
+        orderId,
+        status: orderStatus[orderId]
+    });
 });
 
-// Web App Routes
-
-// Trang chủ giới thiệu nhà hàng
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/index.html');
+app.put('/api/order/update-status/:orderId', (req, res) => {
+    const { orderId } = req.params;
+    const { status } = req.body;
+    
+    if (!orders[orderId]) {
+        return res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
+    }
+    
+    const validStatuses = ['Đang xử lý', 'Sắp xong', 'Xong'];
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Trạng thái không hợp lệ' });
+    }
+    
+    orderStatus[orderId] = status;
+    
+    res.json({
+        success: true,
+        message: `Cập nhật trạng thái đơn hàng ${orderId} thành ${status}`
+    });
 });
 
-// Trang quản lý đơn hàng
-app.get('/orders', (req, res) => {
-    res.sendFile(__dirname + '/public/orders.html');
-});
-
-// Deep link cho app Android
-app.get('/deep-link', (req, res) => {
-    // Trong thực tế, bạn sẽ redirect đến intent của Android app
-    res.json({ 
-        message: 'Mở ứng dụng Food Ordering',
-        intent: 'foodordering://menu'
+// API cho thông tin nhóm
+app.get('/api/about-us', (req, res) => {
+    res.json({
+        team: [
+            { studentId: 'MSSV1', name: 'Họ tên thành viên 1' },
+            { studentId: 'MSSV2', name: 'Họ tên thành viên 2' },
+            { studentId: 'MSSV3', name: 'Họ tên thành viên 3' }
+        ],
+        contact: 'foodorder@cntt.io'
     });
 });
 
 // Khởi động server
 app.listen(PORT, () => {
-    console.log(`Server đang chạy trên port ${PORT}`);
+    console.log(`Server đang chạy trên cổng ${PORT}`);
 });

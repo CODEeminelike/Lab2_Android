@@ -10,10 +10,10 @@
       </SelectionState>
       <SelectionState runConfigName="MainActivity">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-03-31T08:42:39.255646900Z">
+        <DropdownSelection timestamp="2025-04-13T21:40:15.872104900Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=5P5PKFHE4LDETOJZ" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\LENOVO\.android\avd\Medium_Phone.avd" />
             </handle>
           </Target>
         </DropdownSelection>

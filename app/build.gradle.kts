@@ -39,6 +39,8 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.google.material)
     implementation(libs.androidx.appcompat)
+    implementation(libs.volley)
+    implementation(libs.androidx.localbroadcastmanager)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
